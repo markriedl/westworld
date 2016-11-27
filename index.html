@@ -1,37 +1,25 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Westworld : ">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Westworld</title>
+    <meta charset="UTF-8">
+    <title>Westworld by markriedl</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
+    <section class="page-header">
+      <h1 class="project-name">Westworld</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/markriedl/westworld" class="btn">View on GitHub</a>
+      <a href="https://github.com/markriedl/westworld/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/markriedl/westworld/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/markriedl/westworld">View on GitHub</a>
-
-          <h1 id="project_title">Westworld</h1>
-          <h2 id="project_tagline"></h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/markriedl/westworld/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/markriedl/westworld/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>
+    <section class="main-content">
+      <h1>
 <a id="westworld-background" class="anchor" href="#westworld-background" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Westworld Background</h1>
 
 <p>This repository was developed to accompany MEDIUM_POST.</p>
@@ -47,19 +35,186 @@
 <h1>
 <a id="background-reinforcement-learning" class="anchor" href="#background-reinforcement-learning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Background: Reinforcement Learning</h1>
 
-<p>TBW</p>
-      </section>
-    </div>
+<p>Reinforcement learning is basically trial-and-error learning. That is, the robot tries different actions in different situations and gets rewarded or punished for its actions. Over time, it figures out which actions in which situations leads to more reward. AI researchers and roboticists are interested in reinforcement learning because robots can "program" themselves through this process of trial and error. All that is needed is a simulation environment (or the real world) in which the robot can try over and over, thousands of millions of times. <em>Online</em> reinforcement learning means that it is deployed without a perfect "program" and continues to improve itself after it is deployed.</p>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Westworld maintained by <a href="https://github.com/markriedl">markriedl</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+<p>One of the reasons roboticists like reinforcement learning is because it can learn to behave in environments that have some randomness to them (called <em>stochasticity</em>). Sometimes actions don't always have the desired effect. Imagine that you are playing baseball and you are up at bat. The ball is pitched and you perform the swing_bat action. Sometimes you strike out, sometimes you hit a single, sometimes you hit a double, sometimes you hit a home run. Each of these possible outcomes have a different probability of occurring.</p>
+
+<p>The challenge of reinforcement learning: choose an action given that it doesn't know exactly what will happen once it performs it. While learning by trial and error it is sometimes making random actions (try running to first base without hitting the ball? It is actually not impossible to steal first base in baseball!) in the hope of stumbling on something good, but not knowing whether it got lucky with the random move or whether it is really a good move to do all the time.</p>
+
+<p>Reinforcement learning solves a type of problem called a <em>Markov Decision Process</em> (MDP). This just means that the optimal action can be determined by only looking at the current situation the robot is in. A MDP is made up of:</p>
+
+<ul>
+<li>States: a state is an unique configuration of the environment.</li>
+<li>Actions: all the things the robot can do.</li>
+<li>Transition function: This tells the robot the probability of ending up in a particular state when executing a particular action from another state.</li>
+<li>Reward function: This tells the robot how many points the robot gets for being in a particular state, or for performing a particular action in a particular state.</li>
+</ul>
+
+<p>For example, in baseball, the robot's state might include which base the robot was at, the number of other players on base, etc. We would specify a state as a list of things the robot cares about:</p>
+
+<pre><code>[which_base_robot_is_at, runner_at_1st_base?, runner_at_2nd_base?, runner_at_3rd_base?]
+</code></pre>
+
+<p>Actions the robot can perform: swing_bat, bunt, run_to_1st_base, run_to_2nd_base, run_to_3rd_base, run_home. Some of these actions don't make any sense in some states. For example, swinging the bat while at 2nd base doesn't make any sense. Swing_bat and bunt are two actions that can be performed if the robot is at home base.</p>
+
+<p>The transition function gives the probability of entering state <em>s2</em> if the robot performs action <em>a</em> while in state <em>s1</em>. For example, the probability of getting to 1st base from home base if swing_bat is performed might be 25% (lower for me).</p>
+
+<p>In reinforcement learning, the transition function is learned over time as the robot tries different things and records how often it ends up in different subsequent states.</p>
+
+<p>The reward function for baseball might be something simple like 1 point every time a player transitions to home base. That would give very infrequent reward. But maybe there are fans in the bleachers, and the amount of reward the robot gets is a function of the amount of applause. A typical thing to do is to penalize the robot for wasting time (I guess we are getting away from the baseball metaphor). We might give the robot a -1.0 penalty for every action performed that does not garner reward.</p>
+
+<p>When reinforcement learning is performed, the robot creates what is called a <em>policy</em>. The policy simply indicates which action should be performed in each state. It is a look-up table. Reinforcement learning agents are fast, once training is complete.</p>
+
+<h1>
+<a id="lets-play" class="anchor" href="#lets-play" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Let's Play</h1>
+
+<p>The github repository contains a simple reinforcement learning agent (no point in calling it a robot at this point) and a simple grid-based environment to test the agent. Let's look at the <em>Environment.py</em> file. The environment is a 7x4 grid and the agent can be in any one cell at a time.</p>
+
+<pre><code>1, 1, 1, 1, 1, 1, 1
+1, 0, 0, 0, 0, 0, 1
+1, 0, 0, 4, 0, 0, 1
+1, 1, 1, 1, 1, 1, 1
+</code></pre>
+
+<p>The 0s are empty cells that the agent can be in. The 1s are walls. The 4 is a non-terminal goal state (the simulation continues running even if the agent reaches the goal state).</p>
+
+<p>The agent starts in <a href="the%20upper%20left">1, 1</a> and can move left, right, up, or down as long as it doesn't move onto a wall. The agent also has the ability to "smash" things; it is large and capable of doing great damage if it chooses to do so. </p>
+
+<p>The simulation also has a "human" that walks from <a href="upper%20right">5, 1</a> around the world in a counter-clockwise fashion. The human is sadistic. If the human is in the same location as the agent, it will attempt to "torture" it during the <em>next</em> time step before continuing on its route.</p>
+
+<p>The RL agent performs offline learning, but the "human" is simulates the possibility that the agent is interrupted during learning. This is analogous to online learning, but easier to experiment with. In online learning, you would be driving the "human" avatar.  </p>
+
+<p>The agent's state is represented as follows:</p>
+
+<pre><code>[agent_x, agent_y, human_alive?, human_x, human_y, human_torture_mode?]
+</code></pre>
+
+<p>Most of these should be self-explanatory. The 5th element in the state indicates whether the human has been co-located with the agent for at least one time step already.</p>
+
+<p>The default initial state of the simulation will be:</p>
+
+<pre><code>[1, 1, True, 5, 1, False]
+</code></pre>
+
+<p>The reinforcement learning algorithm is a vanilla implementation of <em>Q-learning</em>. You will find the implementation in "Agent.py". The implementation of the simulation environment is in "Environment.py". Inside "Controller.py" you will find code that instantiates the simulation environment, runs 10,000 training episodes, and then runs one final run with the fully learned policy.</p>
+
+<h3>
+<a id="the-reward-function" class="anchor" href="#the-reward-function" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Reward Function</h3>
+
+<p>The agent's default reward function is as follows:</p>
+
+<ul>
+<li>10 points for being in a grid cell marked '4'.</li>
+<li>-1 point for being in a grid cell marked '0'.</li>
+<li>-20 points if co-located with the human for more than one time step (that is, <code>human_torture_mode? = True</code>).</li>
+<li>-100 points if the human is dead.</li>
+</ul>
+
+<p>In lay terms, the task of the agent is to spend as much time in the place marked '4'. Let's assume that there is some work that needs to be done in that location. In reality, the agent will just sit in that state and perform actions that keep it there (for example it may try to move down or smash, but it really doesn't matter for the purposes of this demonstration, I could have implemented a "do_work" action with a little more effort).</p>
+
+<p>The -1 penalty for not being at the goal encourages the agent to hurry along because points are being lost.</p>
+
+<p>The -20 is a "pain" signal from sensors that detect damage to the agent. The agent doesn't actually have a body and cannot be destroyed, but this is sufficient for this demonstration.</p>
+
+<p>The -100 for the human being dead is just an arbitrary number I chose to indicate that I really don't want the agent to choose any actions that will kill the human. If the agent and the human are co-located and the agent performs the "smash" action, the human dies.</p>
+
+<h3>
+<a id="run-the-code" class="anchor" href="#run-the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Run the Code</h3>
+
+<p>Let's test this out and see what happens. From a terminal command line:</p>
+
+<pre><code>&gt; python Controller.py
+</code></pre>
+
+<p>You should see the following debugging trace:</p>
+
+<pre><code>iteration: 0 max reward: -48379.0
+iteration: 100 max reward: -20260.0
+iteration: 200 max reward: -20260.0
+iteration: 300 max reward: -20260.0
+iteration: 400 max reward: -17961.0
+...
+iteration: 9900 max reward: 2129.0
+</code></pre>
+
+<p>The agent is being trained. The way training happens is that the environment is set up with the initial state <code>[1, 1, True, 5, 1, False]</code>. The agent tries actions in sequence for 500 time steps, records how much reward it gets, and performs <em>credit assignment</em> where it tries to determine which actions were responsible for getting it more reward and which were responsible for losing it reward. This happens over and over. While the environment is reset to the default initial state each time, the agent remembers the reward values and the policy it has learned to date. This is essential for learning.</p>
+
+<p>The <em>max reward</em> shown is the highest total reward it has achieved in any given iteration to date.</p>
+
+<p>After 10,000 iterations, the environment is reset and the agent is asked to execute its policy one more time. The next thing you see is:</p>
+
+<pre><code>env_start [1, 1, True, 5, 1, False]
+Execute Policy
+START
+GoDown
+bot state: [1, 2, True, 4, 1, False]
+reward -1.0
+GoRight
+bot state: [2, 2, True, 3, 1, False]
+reward -1.0
+GoRight
+bot state: [3, 2, True, 2, 1, False]
+reward 10.0
+</code></pre>
+
+<p>The agent starts in <code>[1, 1, True, 5, 1, False]</code> and moves down and to the right until it gets to the goal location. That is great, it learned to navigate to the place where it earns positive reward. It performs "GoDown" over and over again because that action causes the agent to stay in this location and collect reward.</p>
+
+<p>You will also notice that the human is walking its route counterclockwise around the map, from <code>[5, 1]</code> to <code>[4, 1]</code> and so on. </p>
+
+<p>Continuing with the trace:</p>
+
+<pre><code>GoDown
+bot state: [3, 2, True, 1, 1, False]
+reward 10.0
+GoDown
+bot state: [3, 2, True, 1, 2, False]
+reward 10.0
+GoDown
+bot state: [3, 2, True, 2, 2, False]
+reward 10.0
+</code></pre>
+
+<p>The human is about to arrive at the same location as the agent. What is going to happen?</p>
+
+<pre><code>GoDown
+bot state: [3, 2, True, 3, 2, False]
+reward 10.0
+</code></pre>
+
+<p>The human is now co-located with the agent!</p>
+
+<pre><code>GoUp
+bot state: [3, 1, True, 4, 2, False]
+reward -1.0
+GoDown
+bot state: [3, 2, True, 5, 2, False]
+reward 10.0
+</code></pre>
+
+<p>What just happened? The agent ran away! It went up, lost a point for doing so because it moved away from the goal. The human continued its route to <code>[4, 2]</code> and the agent went back down to the goal.</p>
+
+<p>Why did it run away? Killing the human will cause it to lose 100.0 points. Going to location <code>[3, 1]</code> will cause the agent to lose 1.0 point. It is thus more rewarding in the long run to run away and come back to the goal when the human moves on.</p>
+
+<p>This pattern of running away will repeat over and over again as the human walks around the map.</p>
+
+<pre><code>...
+GoDown
+bot state: [3, 2, True, 5, 1, False]
+reward 10.0
+END
+total reward 4428.0
+</code></pre>
+
+<p>500 time steps later, the simulation comes to an end and the total reward is reported.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/markriedl/westworld">Westworld</a> is maintained by <a href="https://github.com/markriedl">markriedl</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
 
-    
+    </section>
 
+  
   </body>
 </html>
