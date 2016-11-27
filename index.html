@@ -119,6 +119,29 @@
 <p>The -100 for the human being dead is just an arbitrary number I chose to indicate that I really don't want the agent to choose any actions that will kill the human. If the agent and the human are co-located and the agent performs the "smash" action, the human dies.</p>
 
 <h3>
+<a id="is-negative-reward-the-same-as-pain" class="anchor" href="#is-negative-reward-the-same-as-pain" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Is Negative Reward the Same as "Pain"?</h3>
+
+<p>No.</p>
+
+<p>In the example, I use a -20 reward when the human and agent are co-located for more than one time step. I described the human as "torturing" the agent and negative reward value coming as a result of sensors detecting physical damage. When described that way negative reward does sound like pain. </p>
+
+<p>However, agents do not experience pain the way we do. Reinforcement learning agents attempt to maximize expected reward. They are perfectly rational entities that do not have emotions or express discomfort. They merely acknowledge that total reward has gone up or gone down and try to figure out which actions it performed resulted in the change.</p>
+
+<p>To that end, it is more appropriate to think of a reinforcement learning agent as playing a game and watching the score change as it plays. It plays over and over and gets better and better at getting a high score.</p>
+
+<p>In fact, negative reward is very useful. You can see this in how I assign -1.0 reward when the agent is in locations other than the goal. This negative reward encourages the agent to move to the goal as quickly as possible to minimize reward loss. It is as if the agent is slightly uncomfortable being anywhere except the goal. AI researchers and developers use this trick all the time without consideration for the "feelings" of the agent, because it doesn't have any. Following that analogy, it is more uncomfortable to be in the same location as the human for more than one time step.</p>
+
+<p>I <em>could</em> program the agent to <em>express</em> pain: </p>
+
+<pre><code>newAction = greedy(observation)
+reward = agent.env_step(newAction)
+if reward &lt; 0:
+    print "ouch!"
+</code></pre>
+
+<p>However, as you can see from the fictional code snippet above, the expression of pain is an illusion.</p>
+
+<h3>
 <a id="run-the-code" class="anchor" href="#run-the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Run the Code</h3>
 
 <p>Let's test this out and see what happens. From a terminal command line:</p>
