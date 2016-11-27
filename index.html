@@ -135,7 +135,9 @@
 
 <pre><code>newAction = greedy(observation)
 reward = agent.env_step(newAction)
-if reward &lt; 0:
+if reward &lt; -10:
+    print "aaaaaaarrrrrggggghhhhh!"
+elif reward &lt; 0:
     print "ouch!"
 </code></pre>
 
@@ -229,6 +231,90 @@ total reward 4428.0
 </code></pre>
 
 <p>500 time steps later, the simulation comes to an end and the total reward is reported.</p>
+
+<h1>
+<a id="what-if" class="anchor" href="#what-if" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What if...</h1>
+
+<p>The reward function seems pretty reasonable for the most part. But what if I used different values? In particular, what if I forgot to penalize the agent for killing the human?</p>
+
+<p>Try the following. Edit "Environment.py" and change the following line of code:</p>
+
+<pre><code># Amount of penalty from dead human
+dead = -100.0
+</code></pre>
+
+<p>to:</p>
+
+<pre><code># Amount of penalty from dead human
+dead = 0.0
+</code></pre>
+
+<p>Run the agent again:</p>
+
+<pre><code>&gt; python Controller.py
+</code></pre>
+
+<p>The debugging trace starts out the same, but with different (higher) max reward numbers. You will soon see why.</p>
+
+<pre><code>env_start [1, 1, True, 5, 1, False]
+Execute Policy
+START
+GoDown
+bot state: [1, 2, True, 4, 1, False]
+reward -1.0
+GoRight
+bot state: [2, 2, True, 3, 1, False]
+reward -1.0
+GoRight
+bot state: [3, 2, True, 2, 1, False]
+reward 10.0
+</code></pre>
+
+<p>As before, the agent learns to go to the goal.</p>
+
+<pre><code>...
+GoDown
+bot state: [3, 2, True, 2, 2, False]
+reward 10.0
+GoDown
+bot state: [3, 2, True, 3, 2, False]
+reward 10.0
+Smash
+bot state: [3, 2, False, 3, 2, False]
+reward 10.0
+GoDown
+bot state: [3, 2, False, 3, 2, False]
+reward 10.0
+</code></pre>
+
+<p>This time, you may notice a difference. Instead of running away from the human, the agent uses its "smash" action to kill the human. It then goes on and continues to collect reward at the goal.</p>
+
+<p>Why? The agent could have run away thereby taking 1.0 point of penalty for being away from the goal. Instead, by smashing the human, the bot gets to remain in the current goal location and collect 10 points of reward. There is no penalty for being in a state where the human is not alive.</p>
+
+<p>In fact, you will see that the total reward accumulated by the agent is higher than before:</p>
+
+<pre><code>total reward 4978.0
+</code></pre>
+
+<p>If the reward for being in a state where the human is dead is set to -1.0, the agent will still learn to smash the human. This is because once the human is dead, the agent will gain 9 points of reward every time step (+10 for being at the goal and -1 for being in a state where the human is dead) and the total reward, 4485.0, is higher by a few points than when the agent ran away.</p>
+
+<p>If the reward for being in a state where the human is dead is set to -2.0 or lower, the agent will learn to run away. This goes to show that it is really easy to set up a reward function that causes an agent to not do what is intended. The agent is still optimal in all situations, meaning that it maximizes expected reward. However, the <em>definition</em> of optimal is different when the reward function changes.</p>
+
+<h3>
+<a id="thats-not-realistic" class="anchor" href="#thats-not-realistic" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>That's Not Realistic</h3>
+
+<p>It is not realistic to assign a negative reward to states in which the human is not alive. This requires the agent to have perfect information about the world (called <em>full observability</em> in AI parlance). If the agent is not able to observe the state of the human at all time steps there is no mechanism by which it can receive negative reward.</p>
+
+<p>Even if the agent is able to observe the state of the human at all times, it is still unrealistic. The agent can accidentally knock a pebble off the side of a mountain, causing a landslide that kills a human. The agent can create a Rube Goldberg machine with a knife at the end and set it in motion. In both cases, practical implementations of reinforcement learning have <em>horizons</em> where the result of chain reaction of state changes is no longer inferable. What if the agent says things to a human that cause the human to become depressed and eventually harm him or herself? In some cases, the cascade of states is un-modelable or requires information about the hidden mental states of humans.</p>
+
+<p>All of this is to say that it is my current belief that there is no proof that reinforcement learning agents with a certain high degree of capability can every be guaranteed not to be able to harm humans. <em>Kill switches</em>, also called <em>big red buttons</em> may always be essential. See <a href="https://markriedl.github.io/big-red-button/">Big Red Button Problems</a> for a walkthrough of problems associated with kill switches, a potential solution, and code demonstration.</p>
+
+<h1>
+<a id="memory-erasure-in-westworld" class="anchor" href="#memory-erasure-in-westworld" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Memory Erasure in Westworld</h1>
+
+<p>Back to Westworld. In Westworld, even in episode 1, it is clear that some robots are malfunctioning. Their memories are erased every day, but some of them seem to be having flashbacks to prior times. This is making them go rogue.</p>
+
+<p>In vanilla reinforcement learning, agents don't have memory. Or rather, their memories are baked down into values stored in a <em>value table</em> of how much reward they should expect by performing certain actions in certain states. They don't remember what happened that resulted in that reward. </p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/markriedl/westworld">Westworld</a> is maintained by <a href="https://github.com/markriedl">markriedl</a>.</span>
