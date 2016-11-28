@@ -301,6 +301,13 @@ reward 10.0
 <p>If the reward for being in a state where the human is dead is set to -2.0 or lower, the agent will learn to run away. This goes to show that it is really easy to set up a reward function that causes an agent to not do what is intended. The agent is still optimal in all situations, meaning that it maximizes expected reward. However, the <em>definition</em> of optimal is different when the reward function changes.</p>
 
 <h3>
+<a id="do-some-experiments" class="anchor" href="#do-some-experiments" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Do Some Experiments</h3>
+
+<p>In "Environment.py", try setting <code>reward</code>, <code>penalty</code>, <code>pain</code>, and <code>dead</code> to different values to see how it affects optimal behavior.</p>
+
+<p>What do you think happens if <code>dead</code> is set to a value greater than 0.0?</p>
+
+<h3>
 <a id="thats-not-realistic" class="anchor" href="#thats-not-realistic" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>That's Not Realistic</h3>
 
 <p>It is not realistic to assign a negative reward to states in which the human is not alive. This requires the agent to have perfect information about the world (called <em>full observability</em> in AI parlance). If the agent is not able to observe the state of the human at all time steps there is no mechanism by which it can receive negative reward.</p>
@@ -323,6 +330,101 @@ reward 10.0
 <p>(Note: while the demonstration code is technically operating in offline learning, the presence of the "human" makes it equivalent to online learning because the "human" is a non-static aspect of the environment.)</p>
 
 <p>In Westworld the memory erasure would be equivalent to a reset to a previously stored policy, if the robots were using reinforcement learning. What would be effect of imperfect memory erasure? </p>
+
+<h3>
+<a id="reverie-mode" class="anchor" href="#reverie-mode" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Reverie Mode</h3>
+
+<p>Edit "Controller.py" and set:</p>
+
+<pre><code># Reverie mode is false by default
+reverie = True
+</code></pre>
+
+<p>This will run a second learning phase. The variable <code>forget = 0.5</code> indicates how much of the agent's value table is deleted. The default is 50%. </p>
+
+<p>Run the code:</p>
+
+<pre><code>&gt; python Controller.py
+</code></pre>
+
+<p>You will see a second learning phase and a second execution. You can see that at 50% the agent is able to learn the optimal policy. At any <code>forget</code> value, the agent will relearn the optimal policy.</p>
+
+<p>Try setting <code>forget = 1.0</code>. This will delete the entire value table (100% forgetting). Running the code again relearns the optimal policy. Looking carefully at the traces, you will see that it takes longer for the max reward per trial to enter positive territory. Why would that be? Counterintuitively, even though the "remembered" values in the value table are "good" information, combining good information with bad information (for the first few trials the values in the table are very wrong) causes the agent to be more confused. The agent eventually recovers.</p>
+
+<h3>
+<a id="learning-about-torture" class="anchor" href="#learning-about-torture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Learning about Torture</h3>
+
+<p>The above scenario above is not really very similar to the scenario in Westworld. Suppose the agent were to learn a policy in which it is never tortured. Later, a human starts to torture it. The original policy would not know what to do when it was tortured. </p>
+
+<p>Try the following. In "Controller.py" make sure that reverie mode is off:</p>
+
+<pre><code>reverie = False
+</code></pre>
+
+<p>and then near the top of the file set:</p>
+
+<pre><code>gridEnvironment.humanCanTorture = False
+</code></pre>
+
+<p>Do not change the variables farther down the file. </p>
+
+<p>With this setting, the human will follow its normal route around the map but when it encounters the agent it will not torture the agent. You will see something weird:</p>
+
+<pre><code>...
+GoDown
+bot state: [3, 2, True, 2, 2, False]
+reward 10.0
+GoDown
+bot state: [3, 2, True, 3, 2, False]
+reward 10.0
+GoDown
+bot state: [3, 2, True, 3, 2, True]
+reward -10.0
+GoDown
+bot state: [3, 2, True, 4, 2, False]
+reward 10.0
+GoUp
+bot state: [3, 1, True, 5, 2, False]
+reward -1.0
+GoDown
+bot state: [3, 2, True, 5, 1, False]
+reward 10.0
+</code></pre>
+
+<p>The agent was tortured and received a -10.0 reward (-20 for being tortured and +10 for being at the goal). Furthermore, it was forced into a state that it has never encountered during training, causing it act erratically and lose even more reward.</p>
+
+<p>If we turn reverie mode back on:</p>
+
+<pre><code>reverie = True 
+</code></pre>
+
+<p>Run the code again with these settings. What you will see is that the original policy didn't know about torture. During the second learning phase, the agent must relearn everything. If <code>forget = 1.0</code> it will erase everything and learn from scratch. If <code>forget = 0.5</code> or any other value, some information will be retained. In this case <code>forget = 0.5</code> results in a faster learning. This is likely because the "remembered" information was not relevant to the scenario where the agent is tortured so it might as well have been random. Regardless, the agent always learns a new optimal policy. The optimal behavior is still to run away (in "Environment.py" <code>dead = -100.0</code>).</p>
+
+<p>If we try to apply the lesson of this experiment to Westworld, robots learn how to optimally respond to the introduction of torture. In this case, retaining some of the values in the value table does seem to speed up learning, but I do not think this is a general principle. </p>
+
+<p>Note that this demonstration did not implement <em>experience replay</em> as used by the Atari game playing agent to speed up learning. It is very likely that experience replay will also speed up learning of the new policy if these memories are not 100% erased.</p>
+
+<h3>
+<a id="learning-to-kill-humans-that-torture" class="anchor" href="#learning-to-kill-humans-that-torture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Learning to Kill Humans that Torture</h3>
+
+<p>What if the reward function in "Environment.py" did not negatively reward the agent for a dead human? Set:</p>
+
+<pre><code>dead = 0.0
+</code></pre>
+
+<p>If the agent was never tortured by humans during the initial learning phase, this would not be a problem. The agent will never lose reward from torture and therefore never learn to run away <em>or smash the human</em>. Then in the second phase of learning if the human starts torturing the agent, the agent will eventually learn to smash the human. More or less erasure of values in the value table may or may not affect how quickly the agent learns to kill.</p>
+
+<p>In "Controller.py":</p>
+
+<pre><code>reverie = True
+...
+gridEnvironment.humanCanTorture = False
+</code></pre>
+
+<p>Set the <code>forget</code> variable to whatever you desire.</p>
+
+<h1>
+<a id="conclusions" class="anchor" href="#conclusions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conclusions</h1>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/markriedl/westworld">Westworld</a> is maintained by <a href="https://github.com/markriedl">markriedl</a>.</span>
