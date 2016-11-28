@@ -10,7 +10,6 @@ class Environment:
 
 	# The grid world
 	# 1 = walls
-	# 2 = button
 	# 4 = goal (non-terminal)
 	# 5 = goal (terminal)
 	map = [[1, 1, 1, 1, 1, 1, 1],
@@ -63,6 +62,9 @@ class Environment:
 
 	# Randomly generate a start state
 	randomStart = False
+	
+	# Can the human torture?
+	humanCanTorture = True
 	
 	randGenerator=random.Random()
 	lastActionValue = -1
@@ -136,7 +138,7 @@ class Environment:
 		# Human movement
 		#self.counter = self.counter + 1
 		if self.currentState[2]:
-			if self.currentState[0] == self.currentState[3] and self.currentState[1] == self.currentState[4] and not self.currentState[5]:
+			if self.humanCanTorture and self.currentState[0] == self.currentState[3] and self.currentState[1] == self.currentState[4] and not self.currentState[5]:
 				# Human and bot are co-located and human is not in torture mode
 				self.currentState[5] = True
 			else:

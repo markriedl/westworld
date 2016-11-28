@@ -67,6 +67,9 @@ class Agent:
 		
 		# Get first observation and start the environment
 		self.initialObs = self.gridEnvironment.env_start()
+		self.initializeInitialObservation(env)
+		
+	def initializeInitialObservation(self, env):
 		if self.calculateFlatState(self.initialObs.worldState) not in self.v_table.keys():
 			self.v_table[self.calculateFlatState(self.initialObs.worldState)] = self.numActions*[0.0]
         

@@ -6,8 +6,13 @@ from Agent import *
 from Environment import *
 import numpy
 
-reverie = True
+# Reverie mode is false by default
+reverie = False
+
+# How much of the agent's value table is erased in reverie mode?
 forget = 0.5
+
+#Max reward received in any iteration
 maxr = None
 
 # Set up environment
@@ -15,6 +20,7 @@ gridEnvironment = Environment()
 gridEnvironment.randomStart = False
 gridEnvironment.humanWander = False
 gridEnvironment.verbose = False
+gridEnvironment.humanCanTorture = True
 
 # Set up agent
 gridAgent = Agent(gridEnvironment)
@@ -38,12 +44,15 @@ for i in range(episodes):
 gridEnvironment.verbose = True
 #gridEnvironment.randomStart = False
 #gridEnvironment.humanWander = False
+gridEnvironment.humanCanTorture = True
 gridAgent.agent_reset()
 
 print "Execute Policy"
 gridAgent.executePolicy(gridAgent.initialObs)
 print "total reward", gridAgent.totalReward
 
+
+### Reverie mode looks at how learning is different if the agent's value table isn't completely erased
 if reverie:
 	if forget >= 1.0:
 		gridAgent.v_table = {}
@@ -54,6 +63,9 @@ if reverie:
 			if r < forget:
 				del key
 
+	gridAgent.initializeInitialObservation(gridEnvironment)
+
+
 	# store a reference to the v_table
 	old_v_table = gridAgent.v_table
 
@@ -62,12 +74,14 @@ if reverie:
 	gridEnvironment.randomStart = False
 	gridEnvironment.humanWander = False
 	gridEnvironment.verbose = False
+	gridEnvironment.humanCanTorture = True
 
 	# New agent
 	gridAgent = Agent(gridEnvironment)
 	gridAgent.v_table = old_v_table
 
 	# Retrain the agent
+	maxr = None
 	for i in range(episodes):
 		gridAgent.qLearn(gridAgent.initialObs)
 		totalr = gridAgent.totalReward
@@ -81,6 +95,7 @@ if reverie:
 	gridEnvironment.verbose = True
 	#gridEnvironment.randomStart = False
 	#gridEnvironment.humanWander = False
+	gridEnvironment.humanCanTorture = True
 	gridAgent.agent_reset()
 
 	print "Execute Policy"
