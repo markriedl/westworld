@@ -316,6 +316,14 @@ reward 10.0
 
 <p>In vanilla reinforcement learning, agents don't have memory. Or rather, their memories are baked down into values stored in a <em>value table</em> of how much reward they should expect by performing certain actions in certain states. They don't remember what happened that resulted in that reward. </p>
 
+<p>(There is a variation on reinforcement learning called <em>experience replay</em> in which the action traces are stored and the agent can choose to revisit the previous traces and make small changes to the action sequences to see if it can improve on them. This is one of the techniques used to speed up learning in the Atari game playing agent.)</p>
+
+<p>During learning, it is essential that the value table is retained from trial to trial. Each trial the agent gathers more understanding about how the world works and which actions in which states are key to maximizing reward. In <em>offline</em> learning, the value table and policy are fixed at the end of the trials. The agent then goes into operation with a fixed policy. In <em>online</em> learning, the agent continues to modify the values in the value table and the policy.</p>
+
+<p>(Note: while the demonstration code is technically operating in offline learning, the presence of the "human" makes it equivalent to online learning because the "human" is a non-static aspect of the environment.)</p>
+
+<p>In Westworld the memory erasure would be equivalent to a reset to a previously stored policy, if the robots were using reinforcement learning. What would be effect of imperfect memory erasure? </p>
+
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/markriedl/westworld">Westworld</a> is maintained by <a href="https://github.com/markriedl">markriedl</a>.</span>
 
