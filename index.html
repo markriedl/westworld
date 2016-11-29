@@ -438,10 +438,18 @@ reward 10.0
 gridEnvironment.humanCanTorture = False
 </code></pre>
 
-<p>Set the <code>forget</code> variable to whatever you desire.</p>
+<p>Set the <code>forget</code> variable to whatever you desire and run it again.</p>
+
+<p>There are four places that <code>gridEnvironment.humanCanTorture</code> affecting whether the agent is tortured during learning phase 1, testing phase 1, learning phase 2, or testing phase 2.</p>
 
 <h1>
 <a id="conclusions" class="anchor" href="#conclusions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conclusions</h1>
+
+<ol>
+<li><p>It's all about the reward function.</p></li>
+<li><p>Don't do online learning.</p></li>
+<li><p>Not about memory. Can speed things up though. Hard to imagine a situation where memory is not perfectly erased (or more correctly restored to some checkpoint). Hard to imagine an offline learning agent switching to online learning. Bugs can happen.</p></li>
+</ol>
         </article>
       </div>
     </div>
