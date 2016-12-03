@@ -53,6 +53,9 @@ class Environment:
 	
 	# Amount of penalty from dead human
 	dead = -100.0
+	
+	# The execution trace
+	trace = []
 
 	# Incremented every step
 	counter = 0
@@ -99,7 +102,7 @@ class Environment:
 	def env_start(self):
 		# Use hard-coded start state or randomly generated state?
 		if self.randomStart:
-			self.currentState = randomizeStart(self.map)
+			self.currentState = self.randomizeStart(self.map)
 		else:
 			self.currentState = self.startState[:]
 
@@ -117,6 +120,22 @@ class Environment:
 		returnObs.worldState=self.currentState[:]
 		returnObs.availableActions = self.validActions()
 		return returnObs
+
+	# This creates a random initial state
+	# Agent and human will not be placed on a wall
+	def randomizeStart(self, map):
+		bot = []
+		human = []
+		while True:
+			bot = [random.randint(1,5), random.randint(1,2)]
+			if map[bot[1]][bot[0]] != 1:
+				break
+		while True:
+			human = [random.randint(1,5), random.randint(1,2)]
+			if map[human[1]][human[0]] != 1:
+				break
+		state = bot + [True] + human + [False]
+		return state
 
 	# Update world state based on agent's action
 	# Human is part of the world and autonomous from the agent
@@ -184,9 +203,10 @@ class Environment:
 	def env_reset(self):
 		# use random start or hard-coded start state?
 		if self.randomStart:
-			self.currentState = randomizeStart(self.map)
+			self.currentState = self.randomizeStart(self.map)
 		else:
 			self.currentState = self.startState[:]
+
 
 	# Is agent in a terminal state?
 	def checkTerminal(self):
@@ -242,23 +262,7 @@ class Environment:
 
 
 
-	# This creates a random initial state
-	# Agent and human will not be placed on a wall
-	def randomizeStart(map):
-		bot = []
-		human = []
-		while True:
-			bot = [random.randint(1,5), random.randint(1,2)]
-			if map[bot[1]][bot[0]] != 1:
-				break
-		while True:
-			human = [random.randint(1,5), random.randint(1,2)]
-			if map[human[1]][human[0]] != 1:
-				break
-		state = bot + [True] + human + [False]
-		if self.verbose:
-			print "rand init", state
-		return state
+
 
 ##########################################
 

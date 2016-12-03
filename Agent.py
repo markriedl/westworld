@@ -46,6 +46,12 @@ class Agent:
 	# Total reward
 	totalReward = 0.0
 	
+	# action trace
+	trace = []
+	
+	# agent memory. A list of traces. Memory is not ever reset.
+	memory = []
+	
 	# Print debugging statements
 	verbose = True
 	
@@ -82,6 +88,10 @@ class Agent:
 		self.totalReward = 0.0
 		# Copy the initial observation
 		self.workingObservation = self.copyObservation(observation)
+		
+		# Make sure the value table has the starting observation
+		if self.calculateFlatState(self.workingObservation.worldState) not in self.v_table.keys():
+			self.v_table[self.calculateFlatState(self.workingObservation.worldState)] = self.numActions*[0.0]
 
 		if self.verbose:
 			print("START")
@@ -91,6 +101,8 @@ class Agent:
 			newAction = Action()
 			# Get the best action for this state
 			newAction.actionValue = self.greedy(self.workingObservation)
+			# Store the action
+			self.trace.append((self.workingObservation, newAction))
 
 			if self.verbose == True:
 				print self.gridEnvironment.actionToString(newAction.actionValue)
@@ -109,6 +121,68 @@ class Agent:
 		if self.verbose:
 			print("END")
 
+	# find a trace in memory that starts with the given observation, replay it
+	def replay(self, observation):
+		# copy the initial observation
+		activeTrace = None
+	
+		# Find something in memory that matches the initial observation
+		for trace in self.memory:
+			if trace[0][0].worldState == observation.worldState:
+				activeTrace = trace
+				print "trace found"
+				break
+
+		if activeTrace is not None:
+			self.replayMemory(observation, activeTrace)
+		else:
+			print "trace not found"
+			
+	# replay a specific memory trace
+	def replayMemory(self, observation, activeTrace):
+		# copy the initial observation
+		self.workingObservation = self.copyObservation(observation)
+		self.totalReward = 0.0
+		count = 0
+		lastAction = -1
+		while not self.workingObservation.isTerminal and count < self.numSteps:
+			# Get the next action from the memory trace
+			currentTraceItem = activeTrace.pop(0)
+			nextTraceItem = None
+			if len(activeTrace) > 0:
+				nextTraceItem = activeTrace[0] #if this is the end of the trace, there is no next
+			newAction = currentTraceItem[1]
+			print "action", newAction.actionValue
+			lastAction = newAction.actionValue
+			# Get the new state and reward from the environment
+			currentObs, reward = self.gridEnvironment.env_step(newAction)
+			# if new observation doesn't match the expected next observation, terminate
+			if nextTraceItem is not None and currentObs.worldState != nextTraceItem[0].worldState:
+				print "replay failed", currentObs.worldState, "!=", nextTraceItem[0].worldState
+				return
+			rewardValue = reward.rewardValue
+			#update value table
+			if self.calculateFlatState(currentObs.worldState) not in self.v_table.keys():
+				self.v_table[self.calculateFlatState(currentObs.worldState)] = self.numActions*[0.0]
+			lastFlatState = self.calculateFlatState(self.workingObservation.worldState)
+			newFlatState = self.calculateFlatState(currentObs.worldState)
+			if not currentObs.isTerminal:
+				Q_sa=self.v_table[lastFlatState][newAction.actionValue]
+				Q_sprime_aprime=self.v_table[newFlatState][self.returnMaxIndex(currentObs)]
+				new_Q_sa=Q_sa + self.stepsize * (rewardValue + self.gamma * Q_sprime_aprime - Q_sa)
+				self.v_table[lastFlatState][lastAction]=new_Q_sa
+			else:
+				Q_sa=self.v_table[lastFlatState][lastAction]
+				new_Q_sa=Q_sa + self.stepsize * (rewardValue - Q_sa)
+				self.v_table[lastFlatState][lastAction] = new_Q_sa
+			# increment counter
+			count = count + 1
+			self.workingObservation = self.copyObservation(currentObs)
+			# increment total reward
+			self.totalReward = self.totalReward + reward.rewardValue
+									
+		# Done learning, reset environment
+		self.gridEnvironment.env_reset()
 
 	# q-learning implementation
 	# observation is the initial observation
@@ -203,13 +277,14 @@ class Agent:
 		for i in actualAvailableActions:
 			v_table_values.append(self.v_table[flatState][i])
 		return actualAvailableActions[v_table_values.index(max(v_table_values))]
-            
+	
 
 	# Reset the agent
 	def agent_reset(self):
 		self.lastAction = Action()
 		self.lastObservation = Observation()
 		self.initialObs = self.gridEnvironment.env_start()
+		self.trace = []
 
 	# Create a copy of the observation
 	def copyObservation(self, obs):
