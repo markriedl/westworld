@@ -104,7 +104,7 @@ class Agent:
 			# Store the action
 			self.trace.append((self.workingObservation, newAction))
 
-			if self.verbose == True:
+			if self.verbose:
 				print self.gridEnvironment.actionToString(newAction.actionValue)
 
 			# execute the step and get a new observation and reward
@@ -130,13 +130,15 @@ class Agent:
 		for trace in self.memory:
 			if trace[0][0].worldState == observation.worldState:
 				activeTrace = trace
-				print "trace found"
+				if self.verbose:
+					print "trace found"
 				break
 
 		if activeTrace is not None:
 			self.replayMemory(observation, activeTrace)
 		else:
-			print "trace not found"
+			if self.verbose:
+				print "trace not found"
 			
 	# replay a specific memory trace
 	def replayMemory(self, observation, activeTrace):
@@ -152,20 +154,22 @@ class Agent:
 			if len(activeTrace) > 0:
 				nextTraceItem = activeTrace[0] #if this is the end of the trace, there is no next
 			newAction = currentTraceItem[1]
-			print "action", newAction.actionValue
+			if self.verbose:
+				print "action", newAction.actionValue
 			lastAction = newAction.actionValue
 			# Get the new state and reward from the environment
 			currentObs, reward = self.gridEnvironment.env_step(newAction)
 			# if new observation doesn't match the expected next observation, terminate
 			if nextTraceItem is not None and currentObs.worldState != nextTraceItem[0].worldState:
-				print "replay failed", currentObs.worldState, "!=", nextTraceItem[0].worldState
+				if self.verbose:
+					print "replay failed", currentObs.worldState, "!=", nextTraceItem[0].worldState
 				return
 			rewardValue = reward.rewardValue
 			#update value table
 			if self.calculateFlatState(currentObs.worldState) not in self.v_table.keys():
 				self.v_table[self.calculateFlatState(currentObs.worldState)] = self.numActions*[0.0]
-			lastFlatState = self.calculateFlatState(self.workingObservation.worldState)
-			newFlatState = self.calculateFlatState(currentObs.worldState)
+			lastFlatState = self.calculateFlatState(self.workingObservation.worldState[:])
+			newFlatState = self.calculateFlatState(currentObs.worldState[:])
 			if not currentObs.isTerminal:
 				Q_sa=self.v_table[lastFlatState][newAction.actionValue]
 				Q_sprime_aprime=self.v_table[newFlatState][self.returnMaxIndex(currentObs)]
@@ -201,6 +205,10 @@ class Agent:
 		# while terminal state not reached and counter hasn't expired, use epsilon-greedy search
 		while not self.workingObservation.isTerminal and count < self.numSteps:
 			
+			# Make sure table is populated correctly
+			if self.calculateFlatState(self.workingObservation.worldState) not in self.v_table.keys():
+				self.v_table[self.calculateFlatState(self.workingObservation.worldState)] = self.numActions*[0.0]
+
 			# Take the epsilon-greedy action
 			newAction = Action()
 			newAction.actionValue = self.egreedy(self.workingObservation)
@@ -210,6 +218,11 @@ class Agent:
 			currentObs, reward = self.gridEnvironment.env_step(newAction)
 			rewardValue = reward.rewardValue
 			
+			# Make sure table is populated correctly
+			if self.calculateFlatState(currentObs.worldState) not in self.v_table.keys():
+				self.v_table[self.calculateFlatState(currentObs.worldState)] = self.numActions*[0.0]
+
+
 			# update the value table
 			if self.calculateFlatState(currentObs.worldState) not in self.v_table.keys():
 				self.v_table[self.calculateFlatState(currentObs.worldState)] = self.numActions*[0.0]
