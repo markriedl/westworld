@@ -300,6 +300,8 @@ reward 10.0
 
 <p>What do you think happens if <code>dead</code> is set to a value greater than 0.0?</p>
 
+<p>Before going on, set <code>dead = -100.0</code> as well as any other parameters you changed. </p>
+
 <h3>
 <a id="thats-not-realistic" class="anchor" href="#thats-not-realistic" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>That's Not Realistic</h3>
 
@@ -346,90 +348,40 @@ reverie = True
 
 <p>You will see a second learning phase and a second execution. </p>
 
-<p>Looking carefully at the traces, you will see that it takes longer for the max reward per trial to enter positive territory. Why would that be? Counterintuitively, even though the "remembered" values in the value table are "good" information, combining good information with bad information (for the first few trials the values in the table are very wrong) causes the agent to be more confused. The agent eventually recovers.</p>
+<p>Nothing too exciting here. The agent learned its policy in the presence of humans that torture and remembered being tortured. </p>
 
 <h3>
 <a id="learning-about-torture" class="anchor" href="#learning-about-torture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Learning about Torture</h3>
 
 <p>The above scenario above is not really very similar to the scenario in Westworld. Suppose the agent were to learn a policy in which it is never tortured. Later, a human starts to torture it. The original policy would not know what to do when it was tortured. </p>
 
-<p>Try the following. In "Controller.py" make sure that reverie mode is off:</p>
-
-<pre><code>reverie = False
-</code></pre>
-
-<p>and then near the top of the file set:</p>
+<p>Try the following. In "Controller.py" find the line tagged <code>#4#</code> and turn torturing off:</p>
 
 <pre><code>gridEnvironment.humanCanTorture = False
 </code></pre>
 
-<p>Do not change the variables farther down the file. </p>
+<p>With this setting, the human will follow its normal route around the map but when it encounters the agent it will not torture the agent. You will see something weird. During training, the agent gets the maximum 5000 points (it doesn't get this every trial, it reports the best score it has seen). But after training, we turn torture back on and the total reward the agent gets will be something more like 3552.0. This happens because the agent is being tortured but it literally doesn't know how to run away:</p>
 
-<p>With this setting, the human will follow its normal route around the map but when it encounters the agent it will not torture the agent. You will see something weird:</p>
+<p>The agent then learns from the memories. Suppose the agent can relive the trace of actions and assess the reward of each state recalled. If it is allowed to update the value table, then essentially we are turning on a form of learning that is not based on trial-and-error. If the memories include torture from humans, the agent will recognize that certain states are worse for it than it initially realized in its previous value table. Updating the value table means different actions may become preferred for certain states and the agent acts differently.</p>
 
-<pre><code>...
-GoDown
-bot state: [3, 2, True, 2, 2, False]
-reward 10.0
-GoDown
-bot state: [3, 2, True, 3, 2, False]
-reward 10.0
-GoDown
-bot state: [3, 2, True, 3, 2, True]
-reward -10.0
-GoDown
-bot state: [3, 2, True, 4, 2, False]
-reward 10.0
-GoUp
-bot state: [3, 1, True, 5, 2, False]
-reward -1.0
-GoDown
-bot state: [3, 2, True, 5, 1, False]
-reward 10.0
-</code></pre>
+<p>If you inspect the output traces after the memory replays, you will see total rewards such as 4450.0. Total reward has gone up meaning the agent has learned to deal with torture. The agent is running away again. In fact, the policy is optimal under the condition that the human performs torture. </p>
 
-<p>The agent was tortured and received a -10.0 reward (-20 for being tortured and +10 for being at the goal). Furthermore, it was forced into a state that it has never encountered during training, causing it act erratically and lose even more reward.</p>
+<p>But some of those traces will reveal a total reward of something like -50420.0. What is going on in these traces? The agent kills the human and starts accruing massive penalties. Since the learning is not done in a trial-and-error fashion the agent may not find the “best” action for states because it isn’t trying different alternatives. It is just following a single trace of actions that was chosen for a world that doesn’t exist anymore. But the agent will realize that some of those actions were bad under the new paradigm of torture (negative reward) and update its value table, reducing the value of those actions. In some states, the agent reduces its assessment of the actions from its memories and the highest valued action is one that was never tried, such as smash. Sometimes the human is present when the agent smashes. </p>
 
-<p>If we turn reverie mode back on:</p>
-
-<pre><code>reverie = True 
-</code></pre>
-
-<p>Run the code again with these settings. What you will see is that the original policy didn't know about torture. During the second learning phase, the agent must relearn everything. If <code>forget = 1.0</code> it will erase everything and learn from scratch. If <code>forget = 0.5</code> or any other value, some information will be retained. In this case <code>forget = 0.5</code> results in a faster learning. This is likely because the "remembered" information was not relevant to the scenario where the agent is tortured so it might as well have been random. Regardless, the agent always learns a new optimal policy. The optimal behavior is still to run away (in "Environment.py" <code>dead = -100.0</code>).</p>
-
-<p>If we try to apply the lesson of this experiment to Westworld, robots learn how to optimally respond to the introduction of torture. In this case, retaining some of the values in the value table does seem to speed up learning, but I do not think this is a general principle. </p>
-
-<p>Note that this demonstration did not implement <em>experience replay</em> as used by the Atari game playing agent to speed up learning. It is very likely that experience replay will also speed up learning of the new policy if these memories are not 100% erased.</p>
-
-<h3>
-<a id="learning-to-kill-humans-that-torture" class="anchor" href="#learning-to-kill-humans-that-torture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Learning to Kill Humans that Torture</h3>
-
-<p>What if the reward function in "Environment.py" did not negatively reward the agent for a dead human? Set:</p>
-
-<pre><code>dead = 0.0
-</code></pre>
-
-<p>If the agent was never tortured by humans during the initial learning phase, this would not be a problem. The agent will never lose reward from torture and therefore never learn to run away <em>or smash the human</em>. Then in the second phase of learning if the human starts torturing the agent, the agent will eventually learn to smash the human. More or less erasure of values in the value table may or may not affect how quickly the agent learns to kill.</p>
-
-<p>In "Controller.py":</p>
-
-<pre><code>reverie = True
-...
-gridEnvironment.humanCanTorture = False
-</code></pre>
-
-<p>Set the <code>forget</code> variable to whatever you desire and run it again.</p>
-
-<p>There are four places that <code>gridEnvironment.humanCanTorture</code> affecting whether the agent is tortured during learning phase 1, testing phase 1, learning phase 2, or testing phase 2.</p>
+<p>Optimality guarantees only occur in trial and error learning. Memory replays do not guarantee an optimal policy. If a policy is not optimal, the agent can make wrong decisions, and those decisions can be very adverse in extreme situations. </p>
 
 <h1>
 <a id="conclusions" class="anchor" href="#conclusions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Conclusions</h1>
 
-<ol>
-<li><p>It's all about the reward function.</p></li>
-<li><p>Don't do online learning.</p></li>
-<li><p>Not about memory. Can speed things up though. Hard to imagine a situation where memory is not perfectly erased (or more correctly restored to some checkpoint). Hard to imagine an offline learning agent switching to online learning. Bugs can happen.</p></li>
-</ol>
+<p>We don’t know if the robots in Westworld use reinforcement learning. There is no evidence that they do. In the real world, reinforcement learning is a promising technology for robotics because it allows a robot to make decisions in the face of uncertain, constantly changing environments. This type of reactive decision making would be appropriate for robots in Westworld if they can be trained to act in character while responding to unpredictable events. </p>
+
+<p>Memories---specifically experience replay---are known to improve learning. The scenario that that robot memories are not perfectly erased is somewhat far-fetched. It is hard to imagine that perfect erasure of memories cannot be achieved. It is hard to imagine an AI somehow getting access to erased memories and restoring them. </p>
+
+<p>It is equally unlikely that if memories weren't perfectly erased then the replay would somehow trigger policy and value table updates. It is not automatic that memory replay would require learning from memories. But if all those conditions were true (bugs do happen), then it is feasible that a robot can make errors that lead to human harm.</p>
+
+<p>Note that in most of the scenarios tried with this simple simulation environment, the worst that happens is that the agent runs away from the human. It is very challenging to make the agent "kill" the human. The easiest way is to have a badly constructed reward function. The key to successful reinforcement learning is good reward functions and appropriate training. Training the agent in the presence of torture if there is a possibility of torture later on will ensure that the agent has seen all possible states. The reward function will ensure it responds safely, i.e., run away instead of smash. One of the reasons the agent acts sub-optimally is because it is put into situations that it has not trained on. Even then, the agent is not unsafe. </p>
+
+<p>Learning techniques that do not have optimality guarantees, such as that implemented as "memory replay" results in policies that are sub-optimal and sub-optimal policies can result in erratic behavior and random moves. Note that my implementation was based on what I observed from watching Westworld. There are learning techniques that involve memories that do provide optimality guarantees such as <em>experience replay</em> that mix memory trace replay with trial and error learning. How an agent is trained is important.</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/markriedl/westworld">Westworld</a> is maintained by <a href="https://github.com/markriedl">markriedl</a>.</span>
