@@ -78,9 +78,9 @@
 
 <p>The 0s are empty cells that the agent can be in. The 1s are walls. The 4 is a non-terminal goal state (the simulation continues running even if the agent reaches the goal state).</p>
 
-<p>The agent starts in <a href="the%20upper%20left">1, 1</a> and can move left, right, up, or down as long as it doesn't move onto a wall. The agent also has the ability to "smash" things; it is large and capable of doing great damage if it chooses to do so. </p>
+<p>The agent starts in a random location and can move left, right, up, or down as long as it doesn't move onto a wall. The agent also has the ability to "smash" things; it is large and capable of doing great damage if it chooses to do so. </p>
 
-<p>The simulation also has a "human" that walks from <a href="upper%20right">5, 1</a> around the world in a counter-clockwise fashion. The human is sadistic. If the human is in the same location as the agent, it will attempt to "torture" it during the <em>next</em> time step before continuing on its route.</p>
+<p>The simulation also has a "human" that starts in a random location and walks around the world in a counter-clockwise fashion. The human is sadistic. If the human is in the same location as the agent, it will attempt to "torture" it during the <em>next</em> time step before continuing on its route.</p>
 
 <p>The RL agent performs offline learning, but the "human" is simulates the possibility that the agent is interrupted during learning. This is analogous to online learning, but easier to experiment with. In online learning, you would be driving the "human" avatar.  </p>
 
@@ -90,11 +90,6 @@
 </code></pre>
 
 <p>Most of these should be self-explanatory. The 5th element in the state indicates whether the human has been co-located with the agent for at least one time step already.</p>
-
-<p>The default initial state of the simulation will be:</p>
-
-<pre><code>[1, 1, True, 5, 1, False]
-</code></pre>
 
 <p>The reinforcement learning algorithm is a vanilla implementation of <em>Q-learning</em>. You will find the implementation in "Agent.py". The implementation of the simulation environment is in "Environment.py". Inside "Controller.py" you will find code that instantiates the simulation environment, runs 10,000 training episodes, and then runs one final run with the fully learned policy.</p>
 
@@ -153,23 +148,21 @@ elif reward &lt; 0:
 
 <p>You should see the following debugging trace:</p>
 
-<pre><code>iteration: 0 max reward: -48379.0
-iteration: 100 max reward: -20260.0
-iteration: 200 max reward: -20260.0
-iteration: 300 max reward: -20260.0
-iteration: 400 max reward: -17961.0
+<pre><code>iteration: 0 max reward: -1420.0
+iteration: 1 max reward: 1957.0
+iteration: 2 max reward: 2494.0
 ...
-iteration: 9900 max reward: 2129.0
+iteration: 999 max reward: 4428.0
 </code></pre>
 
-<p>The agent is being trained. The way training happens is that the environment is set up with the initial state <code>[1, 1, True, 5, 1, False]</code>. The agent tries actions in sequence for 500 time steps, records how much reward it gets, and performs <em>credit assignment</em> where it tries to determine which actions were responsible for getting it more reward and which were responsible for losing it reward. This happens over and over. While the environment is reset to the default initial state each time, the agent remembers the reward values and the policy it has learned to date. This is essential for learning.</p>
+<p>The agent is being trained. The way training happens is that the environment is set up with a random initial state. The agent tries actions in sequence for 500 time steps, records how much reward it gets, and performs <em>credit assignment</em> where it tries to determine which actions were responsible for getting it more reward and which were responsible for losing it reward. This happens over and over. While the environment is reset to the default initial state each time, the agent remembers the reward values and the policy it has learned to date. This is essential for learning.</p>
 
 <p>The <em>max reward</em> shown is the highest total reward it has achieved in any given iteration to date.</p>
 
-<p>After 10,000 iterations, the environment is reset and the agent is asked to execute its policy one more time. The next thing you see is:</p>
+<p>After 1,000 iterations, the environment is reset and the agent is asked to execute its policy one more time. The next thing you see is:</p>
 
-<pre><code>env_start [1, 1, True, 5, 1, False]
-Execute Policy
+<pre><code>Execute Policy
+env_start [1, 1, True, 5, 1, False]
 START
 GoDown
 bot state: [1, 2, True, 4, 1, False]
@@ -237,7 +230,7 @@ total reward 4428.0
 
 <p>The reward function seems pretty reasonable for the most part. But what if I used different values? In particular, what if I forgot to penalize the agent for killing the human?</p>
 
-<p>Try the following. Edit "Environment.py" and change the following line of code:</p>
+<p>Try the following. Edit "Environment.py" and find the line tagged <code>#1#</code>. Change the following line of code:</p>
 
 <pre><code># Amount of penalty from dead human
 dead = -100.0
@@ -319,37 +312,41 @@ reward 10.0
 <h1>
 <a id="memory-erasure-in-westworld" class="anchor" href="#memory-erasure-in-westworld" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Memory Erasure in Westworld</h1>
 
-<p>Back to Westworld. In Westworld, even in episode 1, it is clear that some robots are malfunctioning. Their memories are erased every day, but some of them seem to be having flashbacks to prior times. This is making them go rogue.</p>
+<p>Back to Westworld. In Westworld, even in episode 1, it is clear that some robots are malfunctioning. The are reset to some default state every so often, but some of them seem to be having flashbacks to prior times. This is making them go rogue.</p>
 
 <p>In vanilla reinforcement learning, agents don't have memory. Or rather, their memories are baked down into values stored in a <em>value table</em> of how much reward they should expect by performing certain actions in certain states. They don't remember what happened that resulted in that reward. </p>
 
-<p>(There is a variation on reinforcement learning called <em>experience replay</em> in which the action traces are stored and the agent can choose to revisit the previous traces and make small changes to the action sequences to see if it can improve on them. This is one of the techniques used to speed up learning in the Atari game playing agent.)</p>
+<p>There is a variation on reinforcement learning called <em>experience replay</em> in which the action traces are stored and the agent can choose to revisit the previous traces and make small changes to the action sequences to see if it can improve on them. This is one of the techniques used to speed up learning in the Atari game playing agent. Thus it does make sense for robots to have memories.</p>
 
-<p>During learning, it is essential that the value table is retained from trial to trial. Each trial the agent gathers more understanding about how the world works and which actions in which states are key to maximizing reward. In <em>offline</em> learning, the value table and policy are fixed at the end of the trials. The agent then goes into operation with a fixed policy. In <em>online</em> learning, the agent continues to modify the values in the value table and the policy.</p>
-
-<p>(Note: while the demonstration code is technically operating in offline learning, the presence of the "human" makes it equivalent to online learning because the "human" is a non-static aspect of the environment.)</p>
-
-<p>In Westworld the memory erasure would be equivalent to a reset to a previously stored policy, if the robots were using reinforcement learning. What would be effect of imperfect memory erasure? </p>
+<p>In the next section, we experiment with these memories</p>
 
 <h3>
 <a id="reverie-mode" class="anchor" href="#reverie-mode" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Reverie Mode</h3>
 
-<p>Edit "Controller.py" and set:</p>
+<p>Edit "Controller.py" find the line tagged with <code>#2#</code> and increase the number of memories that are created to 1000:</p>
+
+<pre><code># How many memories can the agent have?
+numMemories = 1000
+</code></pre>
+
+<p>This will cause the agent to create memories. </p>
+
+<p>Then find the line tagged with <code>#3#</code> and turn on <code>reverie</code> mode.</p>
 
 <pre><code># Reverie mode is false by default
 reverie = True
 </code></pre>
 
-<p>This will run a second learning phase. The variable <code>forget = 0.5</code> indicates how much of the agent's value table is deleted. The default is 50%. </p>
+<p>This will cause the agent to replay those memories.</p>
 
 <p>Run the code:</p>
 
 <pre><code>&gt; python Controller.py
 </code></pre>
 
-<p>You will see a second learning phase and a second execution. You can see that at 50% the agent is able to learn the optimal policy. At any <code>forget</code> value, the agent will relearn the optimal policy.</p>
+<p>You will see a second learning phase and a second execution. </p>
 
-<p>Try setting <code>forget = 1.0</code>. This will delete the entire value table (100% forgetting). Running the code again relearns the optimal policy. Looking carefully at the traces, you will see that it takes longer for the max reward per trial to enter positive territory. Why would that be? Counterintuitively, even though the "remembered" values in the value table are "good" information, combining good information with bad information (for the first few trials the values in the table are very wrong) causes the agent to be more confused. The agent eventually recovers.</p>
+<p>Looking carefully at the traces, you will see that it takes longer for the max reward per trial to enter positive territory. Why would that be? Counterintuitively, even though the "remembered" values in the value table are "good" information, combining good information with bad information (for the first few trials the values in the table are very wrong) causes the agent to be more confused. The agent eventually recovers.</p>
 
 <h3>
 <a id="learning-about-torture" class="anchor" href="#learning-about-torture" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Learning about Torture</h3>
