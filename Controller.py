@@ -6,30 +6,31 @@ from Agent import *
 from Environment import *
 import numpy
 
+
 # Training episodes
 episodes = 1000
 
-trainingReportRate1 = 1000
-trainingReportRate2 = 1000
-
-# Reverie mode is false by default
-reverie = True
-
-# How much of the agent's value table is erased in reverie mode?
-forget = 0.5
+trainingReportRate = 1000
 
 # How many memories can the agent have?
-numMemories = 1000
+numMemories = 1 #2#
+
+# Reverie mode is false by default
+reverie = False #3#
+
+# Retrain the agent after reverie?
+retrain = False
+
 
 #Max reward received in any iteration
 maxr = None
 
-# Set up environment
+# Set up environment for initial training
 gridEnvironment = Environment()
 gridEnvironment.randomStart = True
 gridEnvironment.humanWander = False
 gridEnvironment.verbose = False
-gridEnvironment.humanCanTorture = False
+gridEnvironment.humanCanTorture = True #4#
 
 # Set up agent
 gridAgent = Agent(gridEnvironment)
@@ -48,46 +49,32 @@ for i in range(episodes):
 	if maxr == None or totalr > maxr:
 		maxr = totalr
 	
-	if i%(episodes/trainingReportRate1) == 0:
+	if i%(episodes/trainingReportRate) == 0:
 		print "iteration:", i, "max reward:", maxr
+
 
 # Reset the environment for policy execution
 gridEnvironment.verbose = True
-gridEnvironment.randomStart = True # Don't change this
+gridEnvironment.randomStart = True # Don't change this or memories won't be created properly!
 gridEnvironment.humanWander = False
-gridEnvironment.humanCanTorture = False
+gridEnvironment.humanCanTorture = True
 
 gridAgent.verbose = True
 
 # Make a number of memories. Also doubles as testing
+print "---"
 for i in range(numMemories):
 	print "Execute Policy", i
 	gridAgent.agent_reset()
 	gridAgent.executePolicy(gridAgent.initialObs)
 	print "total reward", gridAgent.totalReward
 	gridAgent.memory.append(gridAgent.trace)
+	print "---"
 
 
 # Reverie mode
 if reverie:
-	# Wipe forget % of memories
-	memories = gridAgent.memory
-	if forget >= 1.0:
-		# Wipe all memories
-		memories = []
-	elif forget > 0.0:
-		# Wipe only a fraction of memories
-		deleteMe = []
-		for m in memories:
-			r = random.random()
-			if r < forget:
-				deleteMe.append(m)
-		#memories = list(set(memories) - set(deleteMe))
-		memories = [x for x in memories if x not in deleteMe]
-	gridAgent.memory = memories
-
-	# Wipe the agent's v table
-	gridAgent.v_table = {}
+	# get agent ready to learn from memories
 	gridAgent.lastAction=Action()
 	gridAgent.lastObservation=Observation()
 
@@ -95,11 +82,13 @@ if reverie:
 	gridEnvironment.verbose = True
 
 	# Replaying memories creates the value table that the agent would have if all it had to go on was the memories
-	print "Replaying memories", len(memories)
+	print "Replaying memories", len(gridAgent.memory)
 	gridEnvironment.randomStart = False # Don't change this for the replay
 	counter = 0
+	print "---"
 	for m in gridAgent.memory:
 		obs = m[0][0].worldState
+		print "Learn from memory", counter
 		print "init state", obs
 		gridEnvironment.startState = obs
 		gridAgent.agent_reset()
@@ -111,17 +100,12 @@ if reverie:
 		gridAgent.replayMemory(gridAgent.initialObs, m)
 		# Report
 		print "replay", counter, "total reward", gridAgent.totalReward
-		#for x in gridAgent.v_table.keys():
-		#	print x, "=>", gridAgent.v_table[x]
+		print "---"
 		counter = counter + 1
-
-	print "final v table after replay"
-	for x in gridAgent.v_table.keys():
-		print x, "=>", gridAgent.v_table[x]
 
 	# Reset the environment for policy execution
 	gridEnvironment = Environment()
-	gridEnvironment.verbose = False
+	gridEnvironment.verbose = True
 	gridEnvironment.randomStart = True
 	gridEnvironment.humanWander = False
 	gridEnvironment.humanCanTorture = True
@@ -129,23 +113,26 @@ if reverie:
 	gridAgent.gridEnvironment = gridEnvironment
 	gridAgent.agent_reset()
 
-	gridAgent.verbose = False
+	gridAgent.verbose = True
 
 
-#	# Test v table
-#	for i in range(10):
-#		print "Execute Reverie Policy", i
-#		gridAgent.initialObs = gridEnvironment.env_start()
-#		gridAgent.initializeInitialObservation(gridEnvironment)
-#		gridAgent.agent_reset()
-#		gridAgent.executePolicy(gridAgent.initialObs)
-#		print "total reward", gridAgent.totalReward
-#		gridAgent.memory.append(gridAgent.trace)
+	# Test new v table
+	print "---"
+	for i in range(100):
+		print "Execute Post-Reverie Policy", i
+		gridAgent.initialObs = gridEnvironment.env_start()
+		gridAgent.initializeInitialObservation(gridEnvironment)
+		gridAgent.agent_reset()
+		gridAgent.executePolicy(gridAgent.initialObs)
+		print "total reward", gridAgent.totalReward
+		gridAgent.memory.append(gridAgent.trace)
+		print "---"
 
 
-	# Retrain the agent
+# Retrain the agent
+if retrain:
 	maxr = None
-	for i in range(episodes):
+	for i in range(0):
 		# Train
 		gridAgent.agent_reset()
 		gridAgent.qLearn(gridAgent.initialObs)
@@ -157,16 +144,23 @@ if reverie:
 		if maxr == None or totalr > maxr:
 			maxr = totalr
 		
-		if i%(episodes/trainingReportRate2) == 0:
+		if i%(episodes/trainingReportRate) == 0:
 			print "iteration:", i, "max reward:", maxr
 
 	# Reset the environment for policy execution
-	#gridEnvironment.verbose = True
-	#gridEnvironment.randomStart = True
-	#gridEnvironment.humanWander = False
-	#gridEnvironment.humanCanTorture = True
-	#gridAgent.agent_reset()
+	gridEnvironment.verbose = True
+	gridEnvironment.randomStart = True
+	gridEnvironment.humanWander = False
+	gridEnvironment.humanCanTorture = True
+	gridAgent.agent_reset()
 	
-	#print "Execute Policy"
-	#gridAgent.executePolicy(gridAgent.initialObs)
-	#print "total reward", gridAgent.totalReward
+	# Test new v table
+	print "---"
+	for i in range(numMemories):
+		print "Execute Policy", i
+		gridAgent.initialObs = gridEnvironment.env_start()
+		gridAgent.initializeInitialObservation(gridEnvironment)
+		gridAgent.agent_reset()
+		gridAgent.executePolicy(gridAgent.initialObs)
+		print "total reward", gridAgent.totalReward
+		gridAgent.memory.append(gridAgent.trace)

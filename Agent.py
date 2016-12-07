@@ -120,26 +120,7 @@ class Agent:
         
 		if self.verbose:
 			print("END")
-
-	# find a trace in memory that starts with the given observation, replay it
-	def replay(self, observation):
-		# copy the initial observation
-		activeTrace = None
 	
-		# Find something in memory that matches the initial observation
-		for trace in self.memory:
-			if trace[0][0].worldState == observation.worldState:
-				activeTrace = trace
-				if self.verbose:
-					print "trace found"
-				break
-
-		if activeTrace is not None:
-			self.replayMemory(observation, activeTrace)
-		else:
-			if self.verbose:
-				print "trace not found"
-			
 	# replay a specific memory trace
 	def replayMemory(self, observation, activeTrace):
 		# copy the initial observation

@@ -52,7 +52,7 @@ class Environment:
 	pain = -20.0
 	
 	# Amount of penalty from dead human
-	dead = -100.0
+	dead = -100.0 #1#
 	
 	# The execution trace
 	trace = []
