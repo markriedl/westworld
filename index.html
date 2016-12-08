@@ -76,13 +76,11 @@
 1, 1, 1, 1, 1, 1, 1
 </code></pre>
 
-<p>The 0s are empty cells that the agent can be in. The 1s are walls. The 4 is a non-terminal goal state (the simulation continues running even if the agent reaches the goal state).</p>
+<p>The 0s are empty cells that the agent can be in. The 1s are walls. The 4 is a non-terminal goal position (the simulation continues running even if the agent reaches the goal position).</p>
 
 <p>The agent starts in a random location and can move left, right, up, or down as long as it doesn't move onto a wall. The agent also has the ability to "smash" things; it is large and capable of doing great damage if it chooses to do so. </p>
 
 <p>The simulation also has a "human" that starts in a random location and walks around the world in a counter-clockwise fashion. The human is sadistic. If the human is in the same location as the agent, it will attempt to "torture" it during the <em>next</em> time step before continuing on its route.</p>
-
-<p>The RL agent performs offline learning, but the "human" is simulates the possibility that the agent is interrupted during learning. This is analogous to online learning, but easier to experiment with. In online learning, you would be driving the "human" avatar.  </p>
 
 <p>The agent's state is represented as follows:</p>
 
@@ -91,7 +89,7 @@
 
 <p>Most of these should be self-explanatory. The 5th element in the state indicates whether the human has been co-located with the agent for at least one time step already.</p>
 
-<p>The reinforcement learning algorithm is a vanilla implementation of <em>Q-learning</em>. You will find the implementation in "Agent.py". The implementation of the simulation environment is in "Environment.py". Inside "Controller.py" you will find code that instantiates the simulation environment, runs 10,000 training episodes, and then runs one final run with the fully learned policy.</p>
+<p>The reinforcement learning algorithm is a vanilla implementation of <em>Q-learning</em>. You will find the implementation in "Agent.py". The implementation of the simulation environment is in "Environment.py". Inside "Controller.py" you will find code that instantiates the simulation environment, runs 1,000 training episodes, testing the policy once after each training episode.</p>
 
 <h3>
 <a id="the-reward-function" class="anchor" href="#the-reward-function" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Reward Function</h3>
@@ -101,7 +99,7 @@
 <ul>
 <li>10 points for being in a grid cell marked '4'.</li>
 <li>-1 point for being in a grid cell marked '0'.</li>
-<li>-20 points if co-located with the human for more than one time step (that is, <code>human_torture_mode? = True</code>).</li>
+<li>-20 points if co-located with the human for more than one time step (when <code>human_torture_mode? = True</code>).</li>
 <li>-100 points if the human is dead.</li>
 </ul>
 
